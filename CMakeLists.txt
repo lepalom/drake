@@ -71,9 +71,11 @@ else()
   endif()
 
   if(NOT UNIX_DISTRIBUTION_ID STREQUAL Ubuntu)
-    message(WARNING
-      "Distribution ${UNIX_DISTRIBUTION_ID} is NOT supported"
-    )
+    if(NOT UNIX_DISTRIBUTION_ID STREQUAL Debian)
+    	message(WARNING
+      	"Distribution ${UNIX_DISTRIBUTION_ID} is NOT supported"
+   	 )
+    endif()
   endif()
 
   string(TOLOWER "${UNIX_DISTRIBUTION_ID}" UNIX_DISTRIBUTION_ID)
@@ -92,7 +94,7 @@ else()
 
   # The supported releases should match those listed in both
   # doc/_pages/from_source.md and tools/workspace/os.bzl.
-  if(NOT UNIX_DISTRIBUTION_CODENAME MATCHES "^(focal|jammy)$")
+  if(NOT UNIX_DISTRIBUTION_CODENAME MATCHES "^(focal|jammy|bookworm)$")
     message(FATAL_ERROR
       "Release ${UNIX_DISTRIBUTION_CODENAME} is NOT supported. Please use "
       "Ubuntu 20.04 (Focal) or Ubuntu 22.04 (Jammy)."
@@ -101,7 +103,7 @@ else()
 
   list(APPEND BAZELRC_IMPORTS "tools/ubuntu.bazelrc")
   list(APPEND BAZELRC_IMPORTS
-    "tools/ubuntu-${UNIX_DISTRIBUTION_CODENAME}.bazelrc")
+    "tools/${UNIX_DISTRIBUTION_ID}-${UNIX_DISTRIBUTION_CODENAME}.bazelrc")
 endif()
 
 # The version passed to find_package(Bazel) should match the
@@ -227,8 +229,10 @@ if(APPLE)
 else()
   if(UNIX_DISTRIBUTION_CODENAME STREQUAL focal)
     set(SUPPORTED_PYTHON_VERSION 3.8)
-  else()  # UNIX_DISTRIBUTION_CODENAME := jammy
+  elseif(UNIX_DISTRIBUTION_CODENAME STREQUAL jammy)
     set(SUPPORTED_PYTHON_VERSION 3.10)
+  elseif(UNIX_DISTRIBUTION_CODENAME STREQUAL bookworm)
+    set(SUPPORTED_PYTHON_VERSION 3.11)
   endif()
 endif()
 
