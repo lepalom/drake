@@ -51,6 +51,7 @@ def _make_result(
         error = None,
         macos_release = None,
         ubuntu_release = None,
+	debian_release = None,
         is_wheel = False,
         homebrew_prefix = None,
         macos_arch_result = None):
@@ -58,6 +59,7 @@ def _make_result(
     is_macos = (macos_release != None) and not is_wheel
     is_macos_wheel = (macos_release != None) and is_wheel
     is_ubuntu = (ubuntu_release != None) and not is_wheel
+    is_debian = (debian_release != None) and not is_wheel
     is_manylinux = (ubuntu_release != None) and is_wheel
     if is_macos:
         target = "macos"
@@ -65,6 +67,8 @@ def _make_result(
         target = "macos_wheel"
     elif is_ubuntu:
         target = "ubuntu"
+    elif is_debian:
+        target = "debian"
     elif is_manylinux:
         target = "manylinux"
     else:
@@ -75,8 +79,10 @@ def _make_result(
         is_macos = is_macos,
         is_macos_wheel = is_macos_wheel,
         is_ubuntu = is_ubuntu,
+	is_debian = is_debian,
         is_manylinux = is_manylinux,
         ubuntu_release = ubuntu_release,
+	debian_release = debian_release,
         macos_release = macos_release,
         homebrew_prefix = homebrew_prefix,
         macos_arch_result = macos_arch_result,
@@ -131,6 +137,27 @@ def _determine_linux(repository_ctx):
         if ubuntu_release in ["20.04", "22.04"]:
             return _make_result(
                 ubuntu_release = ubuntu_release,
+                is_wheel = is_manylinux,
+            )
+
+        # Nothing matched.
+        return _make_result(
+            error = (error_prologue +
+                     "unsupported '%s' release '%s'" %
+                     (distro, ubuntu_release)),
+        )
+
+    if distro == "Debian":
+        lsb = exec_using_which(repository_ctx, ["lsb_release", "-sr"])
+        if lsb.error != None:
+            return _make_result(error = error_prologue + lsb.error)
+        debian_release = lsb.stdout.strip()
+
+        # Match supported Ubuntu release(s). These should match those listed in
+        # both doc/_pages/from_source.md and the root CMakeLists.txt.
+        if debian_release in ["12"]:
+            return _make_result(
+                debian_release = debian_release,
                 is_wheel = is_manylinux,
             )
 
